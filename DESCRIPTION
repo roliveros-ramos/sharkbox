@@ -1,0 +1,18 @@
+Package: sharkbox
+Version: 0.1.0.9000
+Authors@R: c(
+    person("Ricardo", "Oliveros-Ramos", email="roliveros@iattc.org", role=c("aut", "cre")))
+Title: Shark assessment toolbox
+Description: Shark assessment toolbox
+Depends: 
+  R (>= 2.15)
+Imports:
+  stats,
+  utils
+Suggests: 
+  deSolve
+License: GPL-2
+URL: http://roliveros-ramos.github.io/sharkbox
+BugReports: https://github.com/roliveros-ramos/sharkbox/issues
+ByteCompile: TRUE
+RoxygenNote: 6.0.1
