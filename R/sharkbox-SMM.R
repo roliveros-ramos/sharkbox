@@ -20,12 +20,12 @@ newSMM = function(G, S, L=3) {
   if(is.character(G)) G = length(G)
 
   out = list()
-  out$groups = matrix(nrow=G, ncol=G, dimnames = group_names)
+  out$groups = matrix(0, nrow=G, ncol=G, dimnames = group_names)
   out$species = list()
   out$size    = list()
 
   for(i in seq_len(G)) {
-    out$species[[i]] = matrix(nrow=S, ncol=S, dimnames = species_names)
+    out$species[[i]] = matrix(0, nrow=S, ncol=S, dimnames = species_names)
   }
   names(out$species) = group_names[[1]]
 
@@ -33,7 +33,7 @@ newSMM = function(G, S, L=3) {
     size_names = .generateNames(L[i], "size")
     if(L[i]==2) size_names = .generateNames(c("small", "large"))
     if(L[i]==3) size_names = .generateNames(c("small", "medium", "large"))
-    out$size[[i]]    = matrix(nrow=L[i], ncol=L[i], dimnames = size_names)
+    out$size[[i]]    = matrix(0, nrow=L[i], ncol=L[i], dimnames = size_names)
   }
   names(out$size) = species_names[[1]]
 
