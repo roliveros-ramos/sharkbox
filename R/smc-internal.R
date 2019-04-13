@@ -1,6 +1,5 @@
 
-
-newSMM = function(G, S, L=3) {
+newSMC = function(G, S, L=3) {
 
   .generateNames = function(n, label) {
     if(is.character(n)) return(list(n, n))
@@ -20,13 +19,18 @@ newSMM = function(G, S, L=3) {
   if(is.character(G)) G = length(G)
 
   out = list()
-  out$groups = matrix(0, nrow=G, ncol=G, dimnames = group_names)
+
+  out$groups = list()
+  out$groups$prop = setNames(numeric(G), nm = group_names[[1]])
+  out$groups$jump = matrix(0, nrow=G, ncol=G, dimnames = group_names)
+
   out$species = list()
   out$size    = list()
 
   for(i in seq_len(G)) {
     out$species[[i]] = matrix(0, nrow=S, ncol=S, dimnames = species_names)
   }
+
   names(out$species) = group_names[[1]]
 
   for(i in seq_len(S)) {
@@ -37,6 +41,25 @@ newSMM = function(G, S, L=3) {
   }
   names(out$size) = species_names[[1]]
 
+  class(out) = "smc"
+
   return(out)
 
 }
+
+
+# auxiliar ----------------------------------------------------------------
+
+# simulates one markov chain trajectory
+.simMC = function(n, A, initial=NULL) {
+
+  out = numeric(n)
+  out[1] = if(is.null(initial)) 1 else initial # deterministic now
+  states = seq_len(nrow(A))
+  for(i in seq_len(n-1)) {
+    out[i+1] = sample(states, size=1, prob = A[out[i], ])
+  }
+  return(out)
+}
+
+
