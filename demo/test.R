@@ -16,49 +16,34 @@ G = 3
 S = 7
 L = 3
 
-x = newSMM(G=G, S=S, L=L) # species greater than groups
-pp = as.numeric(1/(N*rbrokenbar(n=1, S=G)))
-diag(x$groups) = 1 - pp
-x$groups[row(x$groups) == (col(x$groups) - 1)] = head(pp, -1)
-x$groups = x$groups/rowSums(x$groups)
+x = smcSim(G=G, S=S, L=L)
 
-main_species = sample(x=S, size=G)
+N = 100
 
-.sortSpecies = function(first, size) {
-  c(first, sample(setdiff(seq_len(size), first)))
-}
+y = .simMC(1000, x$groups$TM(1000))
+plot(y)
 
-.coverage = function(A) {
-  out = sapply(seq_along(A), FUN=function(x) length(unique(A[seq_len(x)])))
-  return(which.max(out))
-}
-
-A = t(sapply(main_species, .sortSpecies, size=S))
-A[tail(seq_along(A), -.coverage(A))] = NA
-A = apply(A, 1, FUN=function(x) c(na.omit(x)))
-
-for(i in seq_len(G)) x$species[[i]][A[[i]], A[[i]]] =
-  rbrokenbar(n=length(A[[i]]), S=length(A[[i]]), sequential=TRUE)
-
-for(i in seq_len(S)) x$size[[i]] =
-  rbrokenbar(n=nrow(x$size[[i]]), S=nrow(x$size[[i]]))
+sapply(x$size, steadyStates)
+sapply(x$species, steadyStates)
+steadyStates(x$groups$TM(1000))
 
 
+x = x$groups
+state = 1
+sample(seq_len(nrow(x)), size=1, prob=x[state, ])
 
-markovchain:::.ctmcEigen(x$size$species_1, transpose = FALSE)
 
-function(object) {
-  out<-.ctmcEigen(matr=transMatr, transpose=FALSE)
-  if(is.null(out)) {
-    warning("Warning! No steady state")
-    return(NULL)
-  }
-   out <- - out / diag(object@generator)
-  if(transposeYN==TRUE){
-    out <- out / rowSums(out)
-  }
-  else{
-    out <- out / colSums(out)
-  }
-  return(out)
-}
+object = smc(data, ...) # create object of class xxx: estimate parameters for the model
+
+sim = predict(object) # create a function: creates trajectories
+sim(N=500) # create object of class xxy: a replicate of length 500
+predict(object, newdata) # create several replicates
+
+smcSim(G, S, L, ...) # create object of class xxx: simulate parameters for the model
+
+
+smc
+smc_traj
+
+
+
