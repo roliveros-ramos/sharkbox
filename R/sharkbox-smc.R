@@ -32,8 +32,9 @@ smcSim = function(G, S, L) {
   x$groups$TM = function(N) {
     A = M
     diag(A) = -1
-    A = A/(N*prop)
+    A = A/(pmax(N*prop, 2))
     diag(A) = diag(A) + 1
+    A = A/rowSums(A)
     return(A)
   }
 
@@ -57,7 +58,7 @@ smcSim = function(G, S, L) {
     rbrokenbar(n=length(A[[i]]), S=length(A[[i]]), sequential=TRUE)
 
   # Size matrix
-  for(i in seq_len(S)) x$size[[i]] =
+  for(i in seq_len(S)) x$size[[i]][,] =
     rbrokenbar(n=nrow(x$size[[i]]), S=nrow(x$size[[i]]), shuffle = TRUE)
 
   return(x)
@@ -107,3 +108,41 @@ steadyStates = function(x) {
   return(out)
 }
 
+findLandingGroups = function(x, n, S=NULL, thr=0.03) {
+
+  if(is.null(S)) S = max(x)
+  spp = seq_len(S)
+
+  if(n<10) {
+    warning("n cannot be lower than 10, using 10.")
+    n = 10
+  }
+
+  out = matrix(0, ncol=S, nrow=length(x))
+
+  for(iSp in spp) {
+    out[, iSp] = 0 + (x == iSp)
+  }
+  colnames(out) = seq_len(S)
+
+  out0 = apply(out, 2, .getRates, n=n)
+  out1 = apply(out, 2, .getBlocks, n=n)
+  out2 = rle(rowSums(out1))
+  ones = out2$values == 1
+  out2$values[ones] =  seq_len(sum(ones))
+  out2$values[!ones] = NA
+  out2 = inverse.rle(out2)
+  out3 = round(approx(x=out2, xout = seq_along(out2), rule=2)$y, 0)
+
+  spp = table(out3, x)
+  sp0 = apply(spp, 1, which.max)
+  names(sp0) = NULL
+  gg0 = setNames(seq_along(unique(sp0)), nm = unique(sp0))
+  out4 = sp0[out3]
+  out4 = gg0[as.character(out4)]
+  names(out4) = NULL
+  out4 = .removeBumps(out4, thr=thr)
+
+  return(out4)
+
+}
