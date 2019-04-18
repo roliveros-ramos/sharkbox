@@ -139,4 +139,11 @@ newSMC = function(G, S, L=3) {
   return(x)
 }
 
+.getTM = function(x, S=NULL) {
+  if(is.null(S)) S = max(x)
+  x = factor(x, levels=seq_len(S))
+  out = table(head(x, -1), tail(x, -1))
+  return(out)
+}
+
 
