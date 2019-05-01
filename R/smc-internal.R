@@ -58,6 +58,14 @@ newSMC = function(G, S, L=3) {
   out[1] = if(is.null(initial)) initialNull else initial # deterministic now
   states = seq_len(nrow(A))
   for(i in seq_len(n-1)) {
+    if(sum(A[out[i],])==0) {
+      print(i)
+      print(out[i])
+      print(rownames(A)[i])
+      print(A[out[i],])
+      print(out)
+      print(A)
+    }
     out[i+1] = sample(states, size=1, prob = A[out[i], ])
   }
   return(out)
@@ -139,11 +147,88 @@ newSMC = function(G, S, L=3) {
   return(x)
 }
 
-.getTM = function(x, S=NULL) {
+.getTM = function(x, S=NULL, simplify=FALSE) {
   if(is.null(S)) S = max(x)
   x = factor(x, levels=seq_len(S))
   out = table(head(x, -1), tail(x, -1))
+  if(isTRUE(simplify)) {
+    cs = colSums(out)
+    rs = rowSums(out)
+    ind = which((cs==0) & (rs==0))
+    if(length(ind)>0) {
+      out = out[-ind, ]
+      out = out[, -ind]
+    }
+  }
   return(out)
 }
 
+.countTraj = function(x, S, L=3, thr=0.03) {
+  # x has two columns: species and size-class
+  if(ncol(x)>2) {
+    y = x[, 1]
+    x = x[, 2:3]
+  } else {
+    y = findLandingGroups(x[, 1], S=S, thr=thr)
+  }
+  x0 = tapply(x[,1], INDEX = y, FUN = .getTM, S=S)
+  x1 = tapply(x[,2], INDEX = x[,1], FUN = .getTM, S=L)
+  mainSp = apply(table(y, factor(x[,1], levels=seq_len(S))), 1, which.max)
+  nn = newSMC(G=S, S=S, L=L)
+  nn$species[mainSp] = x0
+  nn$groups$prop[mainSp] = table(y)
+  nn$groups$jump[mainSp, mainSp] = .getTM(x=y, simplify=TRUE)
+  diag(nn$groups$jump) = 0
+  nn$size[as.numeric(names(x1))] = x1
+  return(nn)
+}
+
+.norm = function(x) {
+  s = sum(x, na.rm=TRUE)
+  if(s==0) return(x)
+  return(x/s)
+}
+
+.normMatrix = function(x) {
+  s = rowSums(x, na.rm=TRUE)
+  if(all(s==0)) return(x)
+  s[s==0] = 1
+  return(x/s)
+}
+
+.normSMC = function(x) {
+
+  x$groups$prop = .norm(x$groups$prop)
+  x$groups$jump = .normMatrix(x$groups$jump)
+  for(j in seq_along(x$species)) x$species[[j]] = .normMatrix(x$species[[j]])
+  for(k in seq_along(x$size)) x$size[[k]] = .normMatrix(x$size[[k]])
+  return(x)
+
+}
+
+.verifySMC = function(x, thr) {
+
+  for(j in seq_along(x$species)) {
+
+    cs = colSums(x$species[[j]])
+    rs = rowSums(x$species[[j]])
+    ind0 = which((cs == 0) & (rs == 0))
+    ind1 = which((cs > 0) & (rs == 0))
+
+    x$species[[j]][ind1, ] = 1
+    x$species[[j]][, ind0] = 0
+
+  }
+
+  for(k in seq_along(x$size)) {
+    n = sum(x$size[[k]], na.rm=TRUE)
+    if(n < thr) {
+      warning("Insuficient data to estimate size-class transition matrix, using uniform prior.")
+      x$size[[k]] = x$size[[k]] + 1
+    }
+  }
+
+  return(x)
+
+}
 

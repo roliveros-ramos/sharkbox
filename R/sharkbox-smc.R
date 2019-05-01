@@ -1,5 +1,58 @@
 
+#' Title
+#'
+#' @param data
+#' @param S
+#' @param L
+#' @param control
+#' @param ...
+#'
+#' @return
+#' @export
+#'
+#' @examples
+smc = function(data, S, L, control=NULL, ...) {
 
+  if(is.null(control)) control=list(thr=0.03, min_count=10)
+
+  x = lapply(data, FUN=.countTraj, S=S, L=L, thr=control$thr) # check defaults
+  out = newSMC(G=S, S=S, L=L)
+
+  for(i in seq_along(x)) {
+    out$groups$prop = out$groups$prop + x[[i]]$groups$prop
+    out$groups$jump = out$groups$jump + x[[i]]$groups$jump
+    for(j in seq_along(out$species)) out$species[[j]] = out$species[[j]] + x[[i]]$species[[j]]
+    for(k in seq_along(out$size)) out$size[[k]] = out$size[[k]] + x[[i]]$size[[k]]
+  }
+
+  # verify counts: if lower than NN, assume random? give a warning!
+  out = .verifySMC(out, thr=control$min_count)
+
+  out = .normSMC(out) # transform to probabilities
+
+  kg = head(order(out$groups$prop, decreasing = TRUE), sum(out$groups$prop>control$thr))
+
+  out$groups$prop = out$groups$prop[kg]
+  out$groups$jump = out$groups$jump[kg, kg]
+  out$species = out$species[kg]
+
+  out = .normSMC(out) # re-normalize after removing non-key groups
+
+  M = out$groups$jump
+  prop = out$groups$prop
+
+  out$groups$TM = function(N) {
+    A = M
+    diag(A) = -1
+    A = A/(pmax(N*prop, 2))
+    diag(A) = diag(A) + 1
+    A = A/rowSums(A)
+    return(A)
+  }
+
+  return(out)
+
+}
 
 
 #' Simulate a transition matrix for a Sequential Markov Chaing
@@ -108,15 +161,12 @@ steadyStates = function(x) {
   return(out)
 }
 
-findLandingGroups = function(x, n, S=NULL, thr=0.03) {
+findLandingGroups = function(x, S=NULL, thr=0.03) {
 
   if(is.null(S)) S = max(x)
   spp = seq_len(S)
 
-  if(n<10) {
-    warning("n cannot be lower than 10, using 10.")
-    n = 10
-  }
+  n = max(10, thr*length(x))
 
   out = matrix(0, ncol=S, nrow=length(x))
 
