@@ -11,19 +11,49 @@ library(RColorBrewer)
 # 3 groups: dorado, billfish, sharks
 # 7 species: dorado, 2 tunas, 2 billfish, 2 sharks
 
-
+ind = c(10,11) # c(5,6)
 dat0 = read.csv("data/supersamples_demo.csv")
 dat = split(dat0, f = dat0$trip)
-dat = lapply(dat, FUN = function(x) x[, c(5,6)])
+dat = lapply(dat, FUN = function(x) x[, ind])
 
-mod = smc(dat, S=13, L=3)
-sim = predict(mod0)
+spp = dat0[, c("sp_code", "species", "fao_code")]
+spp = spp[!duplicated(spp), ]
+spp = spp[order(spp$sp_code), ]
+
+.addLG = function(x) {
+  x = cbind(landing_group=as.numeric(findLandingGroups(x[,1])), x)
+  x = do.call(cbind, x)
+  class(x) = c("smc_traj", class(x))
+  return(x)
+}
+
+dat2 = lapply(dat, .addLG)
+
+# spp$species = as.character(spp$species)
+# spp$species[2] = "Mustelus sp."
+
+N = 500
+par(mfrow=c(20,1), mar=c(1,0,1,0), oma=c(6,2,1,2))
+lapply(dat2[1:20], plot)
+axis(1)
+mtext("Number of unloaded fish", 1, outer=TRUE, line=2)
+mtext("Número de peces descargados", 1, outer=TRUE, line=3.5)
+
+colors = c(brewer.pal(9, "Set1"), brewer.pal(12, "Set3"))[-c(6,11)]
+par(new=TRUE)
+plot.window(xlim=c(0,1), ylim=c(0.55,0.95))
+text(x = 0.3, y=seq(0.9,0.6, length=4), labels = spp$species[1:4], col=colors[1:4], cex=1.2, font=2)
+text(x = 0.6, y=seq(0.9,0.6, length=4), labels = spp$species[5:8], col=colors[5:8], cex=1.2, font=2)
+text(x = 0.9, y=seq(0.9,0.6, length=4), labels = spp$species[9:12], col=colors[9:12], cex=1.2, font=2)
+
+mod = smc(dat, S=23, L=3)
+sim = predict(mod)
 
 S = nrow(mod$species$group_04)
 
 #
-# x = sim0(N=500)
-# plot(x)
+x = sim(N=500)
+plot(x)
 #
 # mod = smcSim(G=G, S=S, L=L)
 # sim = predict(mod)
@@ -66,41 +96,67 @@ G = do.call(cbind, lapply(X, FUN=function(x) x[, 1]))
 # lines(x[,1], type="s", col="blue", lwd=2)
 # mtext(c("OBS", "SIM"), 3, line=c(-2,-3), adj=0.05, col=c("blue", "red"))
 
-size = ceiling(10^seq(from=0.9, to=2.7, length=50))
-rep = 50
+size = c(1:9, seq(10, 100, by=2), seq(105, 200, 5))
+rep = 200
 err = array(dim=c(length(size), 2, rep))
+
+mod_prop0 = setNames(numeric(S), nm=sprintf("group_%02d", seq_len(S)))
+mod_prop = mod_prop0
+mod_prop[names(mod$groups$prop)] = mod$groups$prop
 
 for(i in seq_along(size)) {
   for(j in seq_len(rep)) {
     kali::DateStamp("Size =", size[i], ": rep =", j)
     ind = sample(length(X), size = size[i])
-    fit0 = smc(data=Y[ind], S=S, L=L)
-    fit1 = smc(data=X[ind], S=S, L=L)
-    err[i, 1, j] = sum((mod$groups$prop - fit0$groups$prop)^2)
-    err[i, 2, j] = sum((mod$groups$prop - fit1$groups$prop)^2)
+
+    fit0 = try(smc(data=Y[ind], S=S, L=L))
+    if(inherits(fit0, "try-error")) next
+
+    fit1 = try(smc(data=X[ind], S=S, L=L))
+    if(inherits(fit1, "try-error")) next
+
+    fit0_prop = fit1_prop = mod_prop0
+    fit0_prop[names(fit0$groups$prop)] = fit0$groups$prop
+    fit1_prop[names(fit1$groups$prop)] = fit1$groups$prop
+    err[i, 1, j] = sum((mod_prop - fit0_prop)^2)
+    err[i, 2, j] = sum((mod_prop - fit1_prop)^2)
   }
 }
 
-saveRDS(err, file="errorSMC.rds")
+saveRDS(err, file="errorSMC2.rds")
 
-err0 = apply(err[, 1, ], 1, mean)
-err0q = t(apply(err[, 1, ], 1, quantile, prob=c(0.05, 0.95)))
-err1 = apply(err[, 2, ], 1, mean)
-err1q = t(apply(err[, 2, ], 1, quantile, prob=c(0.05, 0.95)))
+err = readRDS(file="errorSMC2.rds")
+err0 = apply(err[, 1, ], 1, median, na.rm=TRUE)
+err0q = t(apply(err[, 1, ], 1, quantile, prob=c(0.05, 0.95), na.rm=TRUE))
+err1 = apply(err[, 2, ], 1, median, na.rm=TRUE)
+err1q = t(apply(err[, 2, ], 1, quantile, prob=c(0.05, 0.95), na.rm=TRUE))
 
 ylim = c(0, max(err0q, err1q))
 plot.new()
-plot.window(xlim=range(size), ylim=ylim)
-matplot(size, cbind(err0, err1), type="l", lty=1, add=TRUE)
-matplot(size, err0q, type="l", lty=3, add=TRUE, col="black")
-title(xlab="Number of supersamples", ylab="error")
+plot.window(xlim=c(1,50)*500, ylim=ylim, xaxs="i")
+# matplot(size, cbind(err0, err1), type="l", lty=1, add=TRUE)
+polygon(x=500*c(size, rev(size)), y=c(err0q[,1], rev(err0q[,2])),
+        col="grey90", border=NA)
+lines(size*500, err0, lwd=2)
+# matplot(size*500, err0q, type="l", lty=3, add=TRUE, col="black")
+title(xlab="Number of fish in super-samples - Número de peces en las supermuestras",
+      ylab="Error")
+mtext("Number of super-samples - Número de supermuestras", 3, line=2.5)
 axis(1)
 axis(2, las=1)
+sax = sort(c(6*200, axTicks(3)))
+axis(3, at=sax, labels = sax/200)
+# abline(v=c(70, 80)*200, lty=2)
+abline(v=1200, lty=2, col="red") # aprox
 box()
 
 barplot(rbind(mod$groups$prop, fit0$groups$prop, fit1$groups$prop), beside=TRUE)
 
 # Old code ----------------------------------------------------------------
+
+plot(dat[[1]])
+
+
 
 sapply(x$size, steadyStates)
 sapply(x$species, steadyStates)
@@ -125,3 +181,19 @@ smc_traj
 
 library(kali)
 kali::plot.map(domain="EPO")
+
+
+x = mod$species$group_04
+.getSpecies = function(x, species=NULL, merge=TRUE) {
+  out = sapply(strsplit(colnames(x)[which(colSums(x) > 0)], split="_"), "[", i=2)
+  out = as.numeric(out)
+  if(!is.null(species)) {
+    out = species[out]
+    out = as.character(out)
+    if(isTRUE(merge)) out = paste(out, collapse=", ")
+  }
+  return(out)
+}
+
+lapply(mod$species, .getSpecies, species=spp$species)
+

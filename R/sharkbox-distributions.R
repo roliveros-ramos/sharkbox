@@ -44,3 +44,26 @@ rbrokenbar = function(n, S, sequential=FALSE, shuffle=FALSE) {
   return(.rbrokenbar1(n, S, shuffle))
 
 }
+
+
+# Discrete uniform distribution -------------------------------------------
+
+#' Title
+#'
+#' @param n number of observations. If length(n) > 1, the length is taken to be the number required.
+#' @param min lower limit of the distribution. Must be integer and finite.
+#' @param max upper limit of the distribution. Must be integer and finite.
+#'
+#' @return
+#' @export
+#'
+#' @examples
+rdunif = function(n, min=0, max=1) {
+  if(length(n)>1) n = length(n)
+  if(!identical(min%%1, 0)) stop("Argument 'min' must be integer.")
+  if(!identical(max%%1, 0)) stop("Argument 'max' must be integer.")
+  min = as.integer(min)
+  max = as.integer(max)
+  out = sample.int(n=max - min + 1, size=n, replace=TRUE)
+  return(min + out - 1)
+}
