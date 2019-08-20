@@ -1,17 +1,19 @@
+#' @export
 interpret.smc = function (formula, textra = NULL, extra.special = NULL) {
   p.env = environment(formula)
   tf = terms.formula(formula, specials = c("b", "mc",
                                        "m", extra.special))
   terms = attr(tf, "term.labels")
-  attr(tf, "intercept") = 0 # no intercept
+  attr(tf, "intercept") = 1 # no intercept
   nt = length(terms)
   if (attr(tf, "response") > 0) {
     response = as.character(attr(tf, "variables")[2])
-    if(grepl(x=response, pattern="|")) {
+    if(grepl(x=response, pattern="\\|")) {
       response = gsub(x=response, pattern=" ", replacement = "")
       xr = unlist(strsplit(x=response, split="\\|"))
       response = xr[1]
       splits = xr[-1]
+      if(length(splits)>1) stop("Only one split factor is currently allowed.")
     } else splits = NULL
   }
   else {
@@ -96,7 +98,7 @@ interpret.smc = function (formula, textra = NULL, extra.special = NULL) {
   }
   pf = paste(response, "~", paste(av, collapse = " + "))
   if (attr(tf, "intercept") == 0) {
-    pf = paste(pf, "0", sep = "")
+    pf = paste(pf, "-1", sep = "")
     if (kp > 1)
       pfok = 1
     else pfok = 0
@@ -133,9 +135,19 @@ interpret.smc = function (formula, textra = NULL, extra.special = NULL) {
     pred.formula = reformulate(pav)
   }
   else pred.formula = ~ 1
-  ret = list(pf = as.formula(pf, p.env), split=splits, pfok = pfok, smooth.spec = smooth.spec,
-              fake.formula = fake.formula, response = response, fake.names = c(av, splits),
-              pred.names = pav, pred.formula = pred.formula)
+  if(length(splits)) {
+    split.formula = as.formula(paste("~", paste(splits,
+                                               collapse = "+")))
+    sav = all.vars(split.formula)
+    split.formula = reformulate(sav)
+  } else split.formula = ~ 1
+
+  sort.formula = reformulate(c(response, splits))
+
+  ret = list(pf = as.formula(pf, p.env), split.names=splits, split.formula=split.formula,
+             pfok = pfok, smooth.spec = smooth.spec, fake.formula = fake.formula,
+             response = response, fake.names = c(av, splits), pred.names = pav,
+             pred.formula = pred.formula, sort.formula=sort.formula)
   class(ret) = "split.smc.formula"
   return(ret)
 }
