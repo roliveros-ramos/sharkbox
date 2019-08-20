@@ -2,6 +2,8 @@
 
 S3method(plot,smc_traj)
 S3method(predict,smc)
+export(blocks)
+export(interpret.smc)
 export(rbrokenbar)
 export(rdunif)
 export(smc)
