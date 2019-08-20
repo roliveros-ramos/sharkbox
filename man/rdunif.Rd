@@ -9,9 +9,9 @@ rdunif(n, min = 0, max = 1)
 \arguments{
 \item{n}{number of observations. If length(n) > 1, the length is taken to be the number required.}
 
-\item{max}{}
+\item{min}{lower limit of the distribution. Must be integer and finite.}
 
-\item{{min, }{max} lower and upper limits of the distribution. Must be finite.}
+\item{max}{upper limit of the distribution. Must be integer and finite.}
 }
 \description{
 Title
