@@ -20,6 +20,8 @@ spp = dat0[, c("sp_code", "species", "fao_code")]
 spp = spp[!duplicated(spp), ]
 spp = spp[order(spp$sp_code), ]
 
+bb = blocks(order|trip ~ species, data=dat0)
+
 .addLG = function(x) {
   x = cbind(landing_group=as.numeric(findLandingGroups(x[,1])), x)
   x = do.call(cbind, x)
