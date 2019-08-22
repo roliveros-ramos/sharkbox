@@ -2,13 +2,59 @@
 % Please edit documentation in R/blocks.R
 \name{blocks}
 \alias{blocks}
-\title{Blocks model}
+\title{Estimating a block model for sequential data}
 \usage{
-blocks(formula, data, thr = 0.03, ...)
+blocks(formula, data, thr = 0.03, verbose = TRUE, na.action,
+  method = "default", ...)
 }
 \arguments{
-\item{...}{}
+\item{formula}{an object of class "formula" (or one that can be coerced to that class):
+a symbolic description of the model to be fitted.
+The details of model specification are given under 'Details'.}
+
+\item{data}{an optional data frame, list or environment (or object coercible by
+as.data.frame to a data frame) containing the variables in the model.
+If not found in data, the variables are taken from environment(formula),
+typically the environment from which glm is called.}
+
+\item{thr}{Threshold for the length of a block in order to be identified.}
+
+\item{verbose}{a logical indicating if some "progress report" should be given.}
+
+\item{na.action}{a function which indicates what should happen when the data contain NAs.
+The default is set by to na.pass.}
+
+\item{method}{The method used for reduction of groups. See 'Details'.}
+
+\item{...}{Not currently used, just in case.}
 }
 \description{
-Blocks model
+\code{block} is used to estimate a 'block model' (REFERENCE)
+based on the dominant level of a variable in a given ordered sequence.
+}
+\details{
+We define an "unloading block" as a group of fish that were
+ predominantly of the same type (e.g. species, quality, size class) within
+ each individual unloading. Unloading blocks are allowed to contain some minor
+ amount of fish with different characteristics for practical reasons.
+ To estimate the unloading blocks in each super-sample, the n-running
+ proportion for each type of fish in the unloading is calculated and the
+ dominant type (more than 50%) identified for each group of n consecutive
+ fishes. An unloading block is then computed as the union of contiguous
+ groups with the same dominant type. Small blocks (less than n fish unloaded)
+ dividing two blocks of the same dominant type are absorved to generate
+ uninterrupted unloading blocks of the same type. Since the expected length
+ of a unloading block is expected to change as function of the total
+ unloading length (i.e. the longer the unloading the longer the unloading
+ blocks), the value n to compute the running proportions should be taken as
+ a fraction (e.g. 3\%, thr=0.03) of the total number fish unloaded N.
+}
+\examples{
+\dontrun{
+
+data_file = system.file("data/supersamples_demo.csv", package="sharkbox")
+dat = read.csv(data_file)
+mod_block0 = blocks(order|trip ~ species, data=dat)
+mod_block1 = blocks(order|trip ~ group, data=dat)
+}
 }
