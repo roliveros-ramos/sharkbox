@@ -19,6 +19,7 @@ interpret.smc = function (formula, textra = NULL, extra.special = NULL) {
   else {
     response = NULL
   }
+  doSplit = length(splits)>0
   sp = attr(tf, "specials")$b
   tp = attr(tf, "specials")$mc
   tip = attr(tf, "specials")$m
@@ -144,10 +145,15 @@ interpret.smc = function (formula, textra = NULL, extra.special = NULL) {
 
   sort.formula = reformulate(c(response, splits))
 
+  xsmooths = sapply(smooth.spec, class)
+  if(sum(xsmooths=="block.spec")>1)
+    stop("Only one block specification is allowed.")
+
   ret = list(pf = as.formula(pf, p.env), split.names=splits, split.formula=split.formula,
              pfok = pfok, smooth.spec = smooth.spec, fake.formula = fake.formula,
              response = response, fake.names = c(av, splits), pred.names = pav,
-             pred.formula = pred.formula, sort.formula=sort.formula)
+             pred.formula = pred.formula, sort.formula=sort.formula,
+             doSplit=doSplit)
   class(ret) = "split.smc.formula"
   return(ret)
 }
