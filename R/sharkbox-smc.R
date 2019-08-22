@@ -1,4 +1,18 @@
 
+#' Title
+#'
+#' @param formula
+#' @param data
+#' @param thr
+#' @param verbose
+#' @param na.action
+#' @param method
+#' @param ...
+#'
+#' @return
+#' @export
+#'
+#' @examples
 smc = function(formula, data, thr=0.03, verbose=TRUE, na.action,
                   method="default", ...) {
 
