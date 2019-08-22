@@ -1,26 +1,52 @@
+if(!require(sharkbox))
+  devtools::install_github("roliveros-ramos/sharkbox")
 library(sharkbox)
-library(RColorBrewer)
-# par(mfrow=c(2,1))
-#
-# x = rbrokenbar(n=1000, S=4)
-# y = rbrokenbar(n=1000, S=4, sequential=TRUE)
-#
-# barplot(t(x[order(x[,1], decreasing = TRUE),]), border=NA, space=0, col=1:4)
-# barplot(t(y[order(y[,1], decreasing = TRUE),]), border=NA, space=0, col=1:4)
 
-# 3 groups: dorado, billfish, sharks
-# 7 species: dorado, 2 tunas, 2 billfish, 2 sharks
+data_file = system.file("data/supersamples_demo.csv", package="sharkbox")
+dat = read.csv(data_file)
 
-ind = c(10,11) # c(5,6)
-dat0 = read.csv("data/supersamples_demo.csv")
-dat = split(dat0, f = dat0$trip)
-dat = lapply(dat, FUN = function(x) x[, ind])
+# creating blocks
+mod_block0 = blocks(order|trip ~ species, data=dat)
+mod_block1 = blocks(order|trip ~ group, data=dat)
+dat$block0 = fitted(mod_block0) # add fitted groups
+dat$block1 = fitted(mod_block1) # add fitted groups
+
+# groups are not equal to blocks based on groups
+table(group=dat$group, block=dat$block1)
+# species are not equal to blocks based on species
+table(species=dat$species, block=dat$block0)
+# comparison of two block classifications
+table(dat$block0, dat$block1)
+
+# interpret GAM has to check prediction order and avoid vicious circles
+model = smc(order|trip ~ b(block0), data=dat)
+
+attach(model)
+
+
+
+
+
+ff = interpret.smc(order|trip ~ mc(species, size))
+
+
+
+
+mod = smc(dat, S=23, L=3)
+sim = predict(mod)
+
+x = sim(N=500)
+
 
 spp = dat0[, c("sp_code", "species", "fao_code")]
 spp = spp[!duplicated(spp), ]
 spp = spp[order(spp$sp_code), ]
 
-bb = blocks(order|trip ~ species, data=dat0)
+
+
+ff = interpret.smc(order|trip ~ species)
+
+xx = glm(order ~ species, data=dat0)
 
 .addLG = function(x) {
   x = cbind(landing_group=as.numeric(findLandingGroups(x[,1])), x)
@@ -48,13 +74,7 @@ text(x = 0.3, y=seq(0.9,0.6, length=4), labels = spp$species[1:4], col=colors[1:
 text(x = 0.6, y=seq(0.9,0.6, length=4), labels = spp$species[5:8], col=colors[5:8], cex=1.2, font=2)
 text(x = 0.9, y=seq(0.9,0.6, length=4), labels = spp$species[9:12], col=colors[9:12], cex=1.2, font=2)
 
-mod = smc(dat, S=23, L=3)
-sim = predict(mod)
 
-S = nrow(mod$species$group_04)
-
-#
-x = sim(N=500)
 plot(x)
 #
 # mod = smcSim(G=G, S=S, L=L)
