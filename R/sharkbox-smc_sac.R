@@ -1,16 +1,5 @@
 
-#' Title
-#'
-#' @param data
-#' @param S
-#' @param L
-#' @param control
-#' @param ...
-#'
-#' @return
 #' @export
-#'
-#' @examples
 xsmc = function(data, S, L, control=NULL, ...) {
 
   if(is.null(control)) control=list(thr=0.03, min_count=10)
