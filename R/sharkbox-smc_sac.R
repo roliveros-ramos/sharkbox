@@ -185,3 +185,18 @@ findLandingGroups = function(x, S=NULL, thr=0.03) {
   return(out4)
 
 }
+
+
+.countTraj = function(x, S, L=3, thr=0.03) {
+  x0 = tapply(x[,1], INDEX = y, FUN = .getTM, S=S)
+  x1 = tapply(x[,2], INDEX = x[,1], FUN = .getTM, S=L)
+  mainSp = apply(table(y, factor(x[,1], levels=seq_len(S))), 1, which.max)
+  nn = newSMC(G=S, S=S, L=L)
+  nn$species[mainSp] = x0
+  nn$groups$prop[mainSp] = table(y)
+  nn$groups$jump[mainSp, mainSp] = .getTM(x=y, simplify=TRUE)
+  diag(nn$groups$jump) = 0
+  nn$size[as.numeric(names(x1))] = x1
+  return(nn)
+}
+
