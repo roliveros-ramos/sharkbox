@@ -75,12 +75,13 @@ blocks = function(formula, data, thr=0.03, verbose=TRUE, na.action,
   }
 
   thisBlocks = thisBlocks[order(ind)] # back to original order
+  thisBlocks = factor(thisBlocks)
 
   bb = table(thisBlocks)
 
   output = list(coefficients = names(bb), residuals = NULL,
                 fitted.values=thisBlocks, model=NULL, na.action=na.action,
-                call=call, formula=formula, terms, data=mf, control=NULL,
+                call=call, formula=formula, terms=terms, data=mf, control=NULL,
                 method=method)
 
   class(output) = "block"
@@ -96,16 +97,6 @@ blocks = function(formula, data, thr=0.03, verbose=TRUE, na.action,
   if(!is.null(gp$split.names))
     return(order(xf[, gp$split.names], xf[, gp$response]))
   return(order(xf[, gp$response]))
-}
-
-.getFactorLevels = function(mf, vars, ind=NULL) {
-  if(is.null(vars)) stop("vars cannot be NULL.")
-  mf = mf[, vars, drop=FALSE]
-  fac = factor(apply(mf, 1, paste, collapse="_"))
-  cod = as.numeric(fac)
-  if(!is.null(ind)) cod = cod[ind]
-  levels(cod) = levels(fac)
-  return(cod)
 }
 
 
