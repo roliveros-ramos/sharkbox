@@ -10,19 +10,36 @@ mod_block0 = blocks(order|trip ~ species, data=dat)
 mod_block1 = blocks(order|trip ~ group, data=dat)
 dat$block0 = fitted(mod_block0) # add fitted groups
 dat$block1 = fitted(mod_block1) # add fitted groups
-
+# re-name "block0" model levels
+levels(dat$block0) = c("sharks", "dorado", "billfishes", "tunas", "swordfishes")
 # groups are not equal to blocks based on groups
 table(group=dat$group, block=dat$block1)
 # species are not equal to blocks based on species
 table(species=dat$species, block=dat$block0)
 # comparison of two block classifications
-table(dat$block0, dat$block1)
+table(model0=dat$block0, model1=dat$block1)
 
 # interpret GAM has to check prediction order and avoid vicious circles
-model = smc(order|trip ~ b(block0), data=dat)
+model = smc(order|trip ~ b(block0) + mc(species, by=block0)
+            + m(species, by=block0), data=dat)
 
 attach(model)
 
+
+estimateTM(gp$smooth.spec[[1]], mf=mf, INDEX=sf)
+estimateTM(gp$smooth.spec[[2]], mf=mf, INDEX=sf)
+estimateTM(gp$smooth.spec[[3]], mf=mf, INDEX=sf)
+
+out = lapply(gp$smooth.spec, FUN=estimateTM, mf=mf, INDEX=sf)
+
+
+x = as.factor(dat$species)
+levels = levels(x)
+x = as.numeric(x)
+by = as.factor(dat$group)
+byLevels = levels(by)
+by = as.numeric(by)
+yy = .getSimpleTM(x, levels, by, byLevels)
 
 
 
