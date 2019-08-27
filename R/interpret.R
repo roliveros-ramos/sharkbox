@@ -149,6 +149,8 @@ interpret.smc = function (formula, textra = NULL, extra.special = NULL) {
   if(sum(xsmooths=="block.spec")>1)
     stop("Only one block specification is allowed.")
 
+  names(smooth.spec) = sapply(smooth.spec, FUN="[[", i="label")
+
   ret = list(pf = as.formula(pf, p.env), split.names=splits, split.formula=split.formula,
              pfok = pfok, smooth.spec = smooth.spec, fake.formula = fake.formula,
              response = response, fake.names = c(av, splits), pred.names = pav,

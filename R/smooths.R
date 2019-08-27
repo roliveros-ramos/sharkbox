@@ -41,10 +41,9 @@ m = function(..., by = NA) {
   return(out)
 }
 
-b = function(..., by = NA) {
+b = function(...) {
   vars   = as.list(substitute(list(...)))[-1]
   dim    = length(vars)
-  by.var = deparse(substitute(by), backtick = TRUE)
   term   = character(dim)
   for(i in 1:dim) {
     term[i] = attr(terms(reformulate(deparse(vars[[i]], backtick = TRUE))),
@@ -53,7 +52,7 @@ b = function(..., by = NA) {
   if(length(unique(term)) != dim)
     stop("Repeated variables as arguments are not permitted.")
   label = .makeLabel(term, "b")
-  out = list(term = term, by = by.var, label = label, dim = dim)
+  out = list(term = term, by = "NA", label = label, dim = dim)
   class(out) = "block.spec"
   return(out)
 }
