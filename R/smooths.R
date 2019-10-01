@@ -10,7 +10,8 @@
 mc = function(..., by = NA) {
   vars   = as.list(substitute(list(...)))[-1]
   dim    = length(vars)
-  by.var = deparse(substitute(by), backtick = TRUE)
+  by.var = all.vars(substitute(by), unique = TRUE)
+  if(length(by.var)==0) by.var = "NA"
   term   = character(dim)
   for(i in 1:dim) {
     term[i] = attr(terms(reformulate(deparse(vars[[i]], backtick = TRUE))),
@@ -27,7 +28,9 @@ mc = function(..., by = NA) {
 m = function(..., by = NA) {
   vars   = as.list(substitute(list(...)))[-1]
   dim    = length(vars)
-  by.var = deparse(substitute(by), backtick = TRUE)
+  # by.var = deparse(substitute(by), backtick = TRUE)
+  by.var = all.vars(substitute(by), unique = TRUE)
+  if(length(by.var)==0) by.var = "NA"
   term   = character(dim)
   for(i in 1:dim) {
     term[i] = attr(terms(reformulate(deparse(vars[[i]], backtick = TRUE))),
