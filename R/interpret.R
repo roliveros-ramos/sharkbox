@@ -11,9 +11,10 @@ interpret.smc = function (formula, textra = NULL, extra.special = NULL) {
     if(grepl(x=response, pattern="\\|")) {
       response = gsub(x=response, pattern=" ", replacement = "")
       xr = unlist(strsplit(x=response, split="\\|"))
+      if(length(xr) > 2) stop("Incorrect split specification.")
       response = xr[1]
-      splits = xr[-1]
-      if(length(splits)>1) stop("Only one split factor is currently allowed.")
+      splits = all.vars(str2lang(xr[2]))
+      # if(length(splits)>1)
     } else splits = NULL
   }
   else {
@@ -67,8 +68,7 @@ interpret.smc = function (formula, textra = NULL, extra.special = NULL) {
                                          terms[i], sep = "")), envir = p.env),
                  silent = TRUE)
         if (inherits(st, "try-error"))
-          st = eval(parse(text = terms[i]), enclos = p.env,
-                    envir = sbns)
+          st = eval(parse(text = terms[i]), enclos = p.env, envir = sbns)
         if (!is.null(textra)) {
           pos = regexpr("(", st$lab, fixed = TRUE)[1]
           st$label = paste(substr(st$label, start = 1,
@@ -116,7 +116,7 @@ interpret.smc = function (formula, textra = NULL, extra.special = NULL) {
       nt = length(smooth.spec[[i]]$term)
       ff1 = paste(smooth.spec[[i]]$term[1:nt], collapse = "+")
       fake.formula = paste(fake.formula, "+", ff1)
-      if (smooth.spec[[i]]$by != "NA") {
+      if (!identical(smooth.spec[[i]]$by, "NA")) {
         fake.formula = paste(fake.formula, "+",
                               smooth.spec[[i]]$by)
         av = c(av, smooth.spec[[i]]$term, smooth.spec[[i]]$by)

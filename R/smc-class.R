@@ -1,41 +1,4 @@
 
-#' Title
-#'
-#' @param object
-#' @param newdata
-#' @param ...
-#'
-#' @return
-#' @export
-#'
-#' @examples
-predict.smc = function(object, newdata, ...) {
-
-  if(missing(newdata)) newdata = NULL
-
-  simulator = function(N) {
-
-    .simulator = function(N) {
-      out = matrix(nrow=N, ncol=3)
-      out[, 1] = .simMC(N, object$groups$TM(N))
-      out[, 2] = .simSMC(out[, 1], object$species)
-      out[, 3] = .simSMC(out[, 2], object$size)
-      colnames(out) = c("group", "species", "size_class")
-      class(out) = c("smc_traj", class(out))
-      return(out)
-    }
-
-    if(length(N)==1) return(.simulator(N))
-
-    out = vector("list", length = length(N))
-    for(i in seq_along(N)) out[[i]] = .simulator(N=N[i])
-
-  }
-
-  if(is.null(newdata)) return(simulator)
-
-}
-
 
 
 # smc_traj class ----------------------------------------------------------

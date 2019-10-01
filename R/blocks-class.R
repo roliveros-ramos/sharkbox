@@ -54,6 +54,7 @@ blocks = function(formula, data, thr=0.03, verbose=TRUE, na.action,
   mf$formula = gp$fake.formula
   mf[[1]] = quote(stats::model.frame)
   mf$na.action = na.pass # check for NAs manually
+  mf$thr = mf$verbose = NULL
   mf = eval(mf, data, parent.frame())
   ind = .sort(mf, gp)
   sf = if(gp$doSplit) mf[ind , gp$split.names, drop=FALSE] else rep(1, length=nrow(mf))
@@ -69,7 +70,8 @@ blocks = function(formula, data, thr=0.03, verbose=TRUE, na.action,
   check = .checkBlocks(thisBlocks, fac, thr, method)
   while(!attr(check, "ok")) {
     thisBlocks[thisBlocks==attr(check, "old")] = attr(check, "new")
-    if(isTRUE(verbose))
+    if(attr(check, "old")=="NA") thisBlocks[is.na(thisBlocks)] = attr(check, "new")
+    if(isTRUE(verbose) & attr(check, "old")!="NA")
       message(sprintf("Merging '%s' with '%s'", attr(check, "old"), attr(check, "new")))
     check = .checkBlocks(thisBlocks, fac, thr, method)
   }
@@ -130,7 +132,7 @@ blocks = function(formula, data, thr=0.03, verbose=TRUE, na.action,
   out2$values[!ones] = NA
   out2 = inverse.rle(out2)
   if(sum(!is.na(out2))<n) {
-    warning("No blocks identified, returning NA")
+    # warning("No blocks identified, returning NA")
     return(out2)
   }
   out3 = round(approx(x=out2, xout = seq_along(out2), rule=2)$y, 0)
@@ -151,16 +153,21 @@ blocks = function(formula, data, thr=0.03, verbose=TRUE, na.action,
 
 # check for small blocks and suggest merging
 .checkBlocks = function(thisBlocks, fac, thr, method) {
+  thisBlocks[is.na(thisBlocks)] = "NA"
   bb = rle(thisBlocks)
   class(bb) = "list"
   bb = data.frame(bb)
   bx = rowsum(bb$lengths, bb$values)
-  bx = data.frame(count=bx, blocks=as.numeric(table(bb$values)[rownames(bx)]))
+  bx_names = rownames(bx)
+  bx = data.frame(count=as.numeric(bx), blocks=as.numeric(table(bb$values)[rownames(bx)]))
   bx$keep = bx$count > thr*sum(bx$count)
-  bx = bx[order(bx$keep, bx$blocks, bx$count), ]
-  bx$name = rownames(bx)
+  ind = order(bx$keep, bx$blocks, bx$count)
+  bx = bx[ind, ]
+  bx$name = bx_names[ind]
   rownames(bx) = NULL
   check = bx
+  check$keep[is.na(check$blocks)] = FALSE # always remove NA in blocks!
+  check$keep[which(check$name == "NA")] = FALSE # always remove NA in blocks!
   attr(check, "ok") = TRUE
   # new -> old
   if(all(check$keep)) return(check)

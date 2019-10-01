@@ -30,10 +30,8 @@ smc = function(formula, data, thr=0.03, verbose=TRUE, na.action,
   sf = if(gp$doSplit) mf[ind , gp$split.names, drop=FALSE] else rep(1, length=nrow(mf))
   # check each split has complete data
 
-  smooths = sapply(gp$smooth.spec, class)
-
-  out = list(mf=mf, sf=sf, gp=gp, ind=ind)
-  return(out)
+  x0 = lapply(gp$smooth.spec, FUN=estimateTM, mf=mf[ind, , drop=FALSE], INDEX=sf)
+  terms = lapply(gp$smooth.spec, FUN="[[", i="term")
 
   output = list(coefficients = x0, residuals = NULL,
                 fitted.values=NULL, model=NULL, na.action=na.action,
@@ -43,5 +41,51 @@ smc = function(formula, data, thr=0.03, verbose=TRUE, na.action,
   class(output) = "smc"
 
   return(output)
+}
+
+
+# Methods -----------------------------------------------------------------
+
+
+#' Title
+#'
+#' @param object
+#' @param newdata
+#' @param ...
+#'
+#' @return
+#' @export
+#'
+#' @examples
+predict.smc = function(object, newdata, ...) {
+
+  if(missing(newdata)) newdata = NULL
+
+  simulator = function(N) {
+
+    par = coef(object)
+    term = terms(object)
+    exec = seq_along(par)
+
+    .simulator = function(N) {
+      mf = data.frame('__index__'=seq_len(N))
+      for(i in seq_along(par)) {
+        mf[, unlist(term[exec[i]])] = predict(par[[exec[i]]], mf=mf)
+      }
+      mf[, 1] = NULL
+      return(mf)
+    }
+
+    if(length(N)==1) return(.simulator(N))
+
+    out = vector("list", length = length(N))
+    for(i in seq_along(N)) out[[i]] = .simulator(N=N[i])
+
+    return(out)
+
+  }
+
+  if(is.null(newdata)) return(simulator)
+
 }
 
