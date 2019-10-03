@@ -17,6 +17,7 @@ vignettes/*.pdf
 
 # Rcpp files
 *.o
+*.so
 *.dll
 
 # vim backup
