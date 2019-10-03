@@ -8,7 +8,8 @@ Depends:
   R (>= 2.15)
 Imports:
   stats,
-  utils
+  utils,
+  Rcpp (>= 1.0.2)
 Suggests: 
   deSolve
 License: GPL-2
@@ -16,3 +17,4 @@ URL: http://roliveros-ramos.github.io/sharkbox
 BugReports: https://github.com/roliveros-ramos/sharkbox/issues
 ByteCompile: TRUE
 RoxygenNote: 6.1.1
+LinkingTo: Rcpp, RcppArmadillo

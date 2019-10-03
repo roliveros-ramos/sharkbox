@@ -73,25 +73,16 @@ print.EMtest = function(x, ...) {
 # Internal ----------------------------------------------------------------
 
 
-#' Support of a multinomial distribution
-#'
-#' @param k The number of categories.
-#' @param n The sample size.
-#'
-#' @return
-#' @export
-#'
-#' @examples
-multinomial_support = function(k, n) {
-  if(k == 1) return(n)
-  size = choose(n+k-1,k-1)
-  mat = matrix(0, nrow=size, ncol=k)
-  j = 1
-  for(i in seq_len(n)) {
-    p = choose(i+k-2, k-2)
-    mat[j + 1:p, seq_len(k-1)] = multinomial_support(k - 1, i)
-    j = j + p
-  }
-  mat[, k] = n - rowSums(mat)
-  return(mat)
-}
+# multinomial_support = function(k, n) {
+#   if(k == 1) return(n)
+#   size = choose(n+k-1,k-1)
+#   mat = matrix(0, nrow=size, ncol=k)
+#   j = 1
+#   for(i in seq_len(n)) {
+#     p = choose(i+k-2, k-2)
+#     mat[j + 1:p, seq_len(k-1)] = multinomial_support(k - 1, i)
+#     j = j + p
+#   }
+#   mat[, k] = n - rowSums(mat)
+#   return(mat)
+# }
